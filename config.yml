@@ -1,0 +1,40 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Install openssl
+    apt:
+      name: openssl
+      state: present
+
+  - name: Generate the CA key
+    openssl_privatekey:
+      path: /etc/ssl/private/ca.key
+      size: 4096
+    register: ca_key
+
+  - name: Generate the CA certificate
+    openssl_csr:
+      path: /etc/ssl/certs/ca.csr
+      privatekey_path: /etc/ssl/private/ca.key
+      common_name: "HOA CER"
+      country_name: "PH"
+      state_or_province_name: "RIZAL"
+      locality_name: "ANTIPOLO"
+      organization_name: "CPE"
+      email_address: "qsmvaleroso@tip.edu.ph"
+    register: ca_csr
+
+  - name: Sign the CA certficate
+    openssl_certificate:
+      path: /etc/ssl/certs/ca.crt
+      privatekey_path: /etc/ssl/private/ca.key
+      csr_path: /etc/ssl/certs/ca.csr
+      provider: selfsigned
+      force: true
+
+  - name: Copy the CA certificate to Control Node
+    copy:
+      src: /etc/ssl/certs/ca-certificates.crt
+      dest: /etc/ssl/CA 
